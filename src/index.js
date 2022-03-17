@@ -21,17 +21,32 @@ function checksExistsUserAccount(request, response, next) {
 }
 
 function checksCreateTodosUserAvailability(request, response, next) {
-    // Complete aqui
+    const { user } = request;
+    const todoNumber = user.todos.length;
+
+    if (!user.pro && todoNumber >= 10)
+        return response.status(403).json({ error: "Free todo limit reached!" })
+
+    return next();
 }
 
 function checksTodoExists(request, response, next) {
-    const { todoId } = request.params;
-    const { user } = request.headers;
+    const todoId = request.params.id;
+
+    if (!validate(todoId))
+        return response.status(400).json({ error: "Id is not uuid!" })
+
+    const { username } = request.headers;
+    const user = users.find(user => user.username === username);
+
+    if (!user)
+        return response.status(404).json({ error: "User not found" })
 
     const todo = user.todos.find(todo => todo.id === todoId)
     if (!todo)
         return response.status(404).json({ error: "Todo not found" })
 
+    request.user = user;
     request.todo = todo;
     return next();
 
